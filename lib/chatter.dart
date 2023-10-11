@@ -6,25 +6,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:groupie/softres/constants.dart';
 import 'package:image_picker/image_picker.dart';
-import 'members.dart';
 
-class Group extends StatefulWidget {
-  final String groupId;
-  final String groupName;
-  final List groupMembers;
-  const Group(
-      {super.key,
-      required this.groupId,
-      required this.groupName,
-      required this.groupMembers});
+class GroupDef extends StatefulWidget {
+  const GroupDef({super.key});
 
   @override
-  State<Group> createState() => _GroupState();
+  State<GroupDef> createState() => _GroupDefState();
 }
 
-class _GroupState extends State<Group> {
+class _GroupDefState extends State<GroupDef> {
   TextEditingController ujumbeCon = TextEditingController();
-  TextEditingController popCon = TextEditingController();
   var emailYangu = FirebaseAuth.instance.currentUser?.email;
   var jinaLangu = FirebaseAuth.instance.currentUser?.displayName;
   @override
@@ -33,25 +24,7 @@ class _GroupState extends State<Group> {
       appBar: AppBar(
         elevation: .5,
         centerTitle: true,
-        title: Text(widget.groupName),
-        actions: [
-          IconButton.filled(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => SearchToAdd(
-                          groupId: widget.groupId,
-                        )));
-              },
-              icon: const Icon(Icons.search)),
-          IconButton.filled(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => MembersPanel(
-                      grpId: widget.groupId, grpName: widget.groupName),
-                ));
-              },
-              icon: const Icon(Icons.person)),
-        ],
+        title: Text(groupDefault),
       ),
       body: Column(
         children: [
@@ -59,7 +32,7 @@ class _GroupState extends State<Group> {
             child: StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection(groupC)
-                  .doc(widget.groupId)
+                  .doc(groupDefaultId)
                   .collection(shats)
                   .orderBy(shatsTime, descending: true)
                   .snapshots(),
@@ -83,6 +56,8 @@ class _GroupState extends State<Group> {
                                   : MainAxisAlignment.start,
                           children: [
                             Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                               margin: const EdgeInsets.only(bottom: 6),
                               constraints: const BoxConstraints(
                                   minHeight: kBottomNavigationBarHeight,
@@ -93,97 +68,22 @@ class _GroupState extends State<Group> {
                                   color: CupertinoColors.systemGrey),
                               child: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  crossAxisAlignment:
+                                      data[index][shatsSender] == emailYangu
+                                          ? CrossAxisAlignment.end
+                                          : CrossAxisAlignment.start,
                                   children: [
-                                    data[index][shatsImage] != null
-                                        ? GestureDetector(
-                                            onTap: () {
-                                              showCupertinoDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    CupertinoAlertDialog(
-                                                  title: Text(
-                                                      "${data[index][shatsText]} sold at ${data[index][shatsImagePrice]} TZS"),
-                                                  content: CupertinoTextField(
-                                                    controller: popCon,
-                                                    keyboardType:
-                                                        TextInputType.number,
-                                                    placeholder: "Amount",
-                                                  ),
-                                                  actions: [
-                                                    CupertinoButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      child: const Text(
-                                                        "Cancel",
-                                                        style: TextStyle(
-                                                            color: CupertinoColors
-                                                                .destructiveRed),
-                                                      ),
-                                                    ),
-                                                    CupertinoButton(
-                                                      onPressed: () {
-                                                        var keyPrice =
-                                                            int.parse(
-                                                                popCon.text);
-                                                        var actualPrice = int
-                                                            .parse(data[index][
-                                                                shatsImagePrice]);
-                                                        if (keyPrice <
-                                                            actualPrice) {
-                                                          mesenja(
-                                                              'Insufficient Amount');
-                                                        } else {
-                                                          mesenja(
-                                                              'Purchased Succesfully');
-                                                          Navigator.of(context)
-                                                              .pop();
-                                                        }
-                                                      },
-                                                      child: const Text("Buy"),
-                                                    )
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  bottom: 6),
-                                              child: Image.network(
-                                                  data[index][shatsImage]),
-                                            ),
+                                    Text(
+                                      data[index][shatsText],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    data[index][shatsSenderName] != null
+                                        ? Text(
+                                            data[index][shatsSenderName],
                                           )
                                         : const SizedBox(),
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            data[index][shatsText],
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
-                                          ),
-                                          data[index][shatImageDesc] != null
-                                              ? Text(
-                                                  data[index][shatImageDesc],
-                                                  style: const TextStyle(
-                                                      fontSize: 16),
-                                                )
-                                              : const SizedBox(),
-                                          data[index][shatsSenderName] != null
-                                              ? Text(
-                                                  data[index][shatsSenderName],
-                                                )
-                                              : const SizedBox(),
-                                        ],
-                                      ),
-                                    )
                                   ]),
                             ),
                           ],
@@ -196,64 +96,32 @@ class _GroupState extends State<Group> {
               },
             ),
           ),
-          widget.groupMembers.contains(emailYangu)
-              ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CupertinoTextField(
-                    controller: ujumbeCon,
-                    textCapitalization: TextCapitalization.sentences,
-                    prefix: IconButton(
-                        onPressed: () async {
-                          XFile? picha = await ImagePicker()
-                              .pickImage(source: ImageSource.gallery);
-                          if (picha != null) {
-                            Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => PhotoSender(
-                                  grpId: widget.groupId, picha: picha),
-                            ));
-                          }
-                        },
-                        icon: const Icon(Icons.camera_alt)),
-                    suffix: IconButton(
-                        onPressed: () async {
-                          await FirebaseFirestore.instance
-                              .collection(groupC)
-                              .doc(widget.groupId)
-                              .collection(shats)
-                              .add({
-                            shatsImage: null,
-                            shatImageDesc: null,
-                            shatsImagePrice: null,
-                            shatsSenderName: jinaLangu,
-                            shatsText: ujumbeCon.text,
-                            shatsSender: emailYangu,
-                            shatsTime: DateTime.now()
-                          });
-                          ujumbeCon.clear();
-                          FocusScope.of(context).unfocus();
-                        },
-                        icon: const Icon(Icons.send)),
-                  ),
-                )
-              : const SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: Card(
-                    child: Center(
-                      child: Text(
-                        'only admins can send message',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                )
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CupertinoTextField(
+              controller: ujumbeCon,
+              textCapitalization: TextCapitalization.sentences,
+              suffix: IconButton(
+                  onPressed: () async {
+                    await FirebaseFirestore.instance
+                        .collection(groupC)
+                        .doc(groupDefaultId)
+                        .collection(shats)
+                        .add({
+                      shatsText: ujumbeCon.text,
+                      shatsSenderName: jinaLangu,
+                      shatsSender: emailYangu,
+                      shatsTime: DateTime.now()
+                    });
+                    ujumbeCon.clear();
+                    FocusScope.of(context).unfocus();
+                  },
+                  icon: const Icon(Icons.send)),
+            ),
+          )
         ],
       ),
     );
-  }
-
-  mesenja(String ujumbe) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ujumbe)));
   }
 }
 
@@ -359,10 +227,8 @@ class PhotoSender extends StatefulWidget {
 }
 
 class _PhotoSenderState extends State<PhotoSender> {
-  var emailYangu = FirebaseAuth.instance.currentUser?.email;
-  var jinaLangu = FirebaseAuth.instance.currentUser?.displayName;
+  var mimi = FirebaseAuth.instance.currentUser?.email;
   TextEditingController nameCon = TextEditingController();
-  TextEditingController descCon = TextEditingController();
   TextEditingController priceCon = TextEditingController();
   bool amUploading = false;
   @override
@@ -392,12 +258,6 @@ class _PhotoSenderState extends State<PhotoSender> {
               ),
               const SizedBox(height: 4),
               CupertinoTextField(
-                controller: descCon,
-                textCapitalization: TextCapitalization.sentences,
-                placeholder: "Item description",
-              ),
-              const SizedBox(height: 4),
-              CupertinoTextField(
                 controller: priceCon,
                 textCapitalization: TextCapitalization.sentences,
                 keyboardType: TextInputType.number,
@@ -424,11 +284,9 @@ class _PhotoSenderState extends State<PhotoSender> {
                             .collection(shats)
                             .add({
                           shatsImage: url,
-                          shatImageDesc: descCon.text,
                           shatsImagePrice: priceCon.text,
                           shatsText: nameCon.text,
-                          shatsSenderName: jinaLangu,
-                          shatsSender: emailYangu,
+                          shatsSender: mimi,
                           shatsTime: DateTime.now()
                         });
                         setState(() {
@@ -447,7 +305,7 @@ class _PhotoSenderState extends State<PhotoSender> {
                     }
                   },
                   child: amUploading
-                      ? const CupertinoActivityIndicator(
+                      ? const CircularProgressIndicator(
                           color: Colors.white,
                         )
                       : const Text("Send"))

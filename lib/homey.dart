@@ -2,8 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:groupie/chatter.dart';
 import 'package:groupie/group.dart';
+import 'package:groupie/search.dart';
 import 'package:groupie/softres/constants.dart';
+
+import 'settingsr.dart';
 
 class HomeMain extends StatefulWidget {
   const HomeMain({super.key});
@@ -35,18 +39,23 @@ class _HomeMainState extends State<HomeMain> {
         centerTitle: true,
         title: const Text('Groupie'),
         leadingWidth: 100,
-        leading: CupertinoButton(
-          onPressed: () {},
-          child: const Text("Admins"),
-        ),
+        leading: IconButton.filled(
+            onPressed: groupOptions, icon: const Icon(Icons.add)),
         actions: [
           IconButton.filled(
-              onPressed: groupOptions, icon: const Icon(Icons.add)),
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const SearchGroup(),
+                ));
+              },
+              icon: const Icon(Icons.search)),
           IconButton.filled(
               onPressed: () {
-                FirebaseAuth.instance.signOut();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const SettingsPage(),
+                ));
               },
-              icon: const Icon(Icons.logout))
+              icon: const Icon(Icons.settings))
         ],
       ),
       body: StreamBuilder(
@@ -69,10 +78,12 @@ class _HomeMainState extends State<HomeMain> {
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => Group(
-                                groupId: data[index].id,
-                                groupName: data[index]['name'])));
+                                  groupId: data[index].id,
+                                  groupName: data[index][nameC],
+                                  groupMembers: data[index][adminC],
+                                )));
                       },
-                      title: Text(data[index]['name']))),
+                      title: Text(data[index][nameC]))),
             );
           }
           return const Center(child: CircularProgressIndicator());
@@ -87,8 +98,7 @@ class _HomeMainState extends State<HomeMain> {
         builder: (context) => CupertinoActionSheet(
               actions: [
                 CupertinoActionSheetAction(
-                    onPressed: createGroup,
-                    child: const Text('Create members group')),
+                    onPressed: createGroup, child: const Text('CREATE GROUP')),
               ],
               cancelButton: CupertinoActionSheetAction(
                 isDestructiveAction: true,
@@ -124,9 +134,10 @@ class _HomeMainState extends State<HomeMain> {
                 if (groupCon.text.isNotEmpty) {
                   try {
                     await FirebaseFirestore.instance.collection(groupC).add({
-                      'name': groupCon.text,
-                      'admin': myMail,
-                      'members': [myMail]
+                      nameC: groupCon.text,
+                      adminC: [myMail],
+                      requestC: [],
+                      membersC: [myMail]
                     });
                     groupCon.clear();
                     Navigator.of(context).pop();
