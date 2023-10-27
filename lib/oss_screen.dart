@@ -158,6 +158,7 @@ class Msajili extends StatefulWidget {
 class _MsajiliState extends State<Msajili> {
   TextEditingController jinafestCon = TextEditingController();
   TextEditingController jinalastCon = TextEditingController();
+  TextEditingController mahaliCon = TextEditingController();
   TextEditingController baruapepeCon = TextEditingController();
   TextEditingController nenoSiriCon = TextEditingController();
   TextEditingController nenoSiriConCon = TextEditingController();
@@ -193,6 +194,8 @@ class _MsajiliState extends State<Msajili> {
                 fomu(jinafestCon, 'First name'),
                 const SizedBox(height: 8),
                 fomu(jinalastCon, 'Last name'),
+                const SizedBox(height: 8),
+                fomu(mahaliCon, 'Location'),
                 const SizedBox(height: 8),
                 fomu(baruapepeCon, 'Email'),
                 const SizedBox(height: 8),
@@ -264,23 +267,27 @@ class _MsajiliState extends State<Msajili> {
 
   mcheckiFomu() {
     if (jinafestCon.text.isEmpty) {
-      mjumbe('Jina la kwanza linahitajika');
+      mjumbe('First name is required');
       return false;
     }
     if (jinalastCon.text.isEmpty) {
-      mjumbe('Jina la mwisho linahitajika');
+      mjumbe('Last name is required');
+      return false;
+    }
+    if (mahaliCon.text.isEmpty) {
+      mjumbe('Location is required');
       return false;
     }
     if (nenoSiriCon.text.isEmpty) {
-      mjumbe('Andika neno siri');
+      mjumbe('Password is required');
       return false;
     }
     if (nenoSiriConCon.text.isEmpty) {
-      mjumbe('Hakiki neno siri');
+      mjumbe('Confirm password to proceed');
       return false;
     }
     if (nenoSiriCon.text != nenoSiriConCon.text) {
-      mjumbe('Neno siri haliendani, Hakiki upya ili kuendelea');
+      mjumbe('Passwords do not match');
       return false;
     }
     return true;
@@ -298,8 +305,9 @@ class _MsajiliState extends State<Msajili> {
     //process ya ku upload deits za yuza
     try {
       await FirebaseFirestore.instance.collection('users').doc(mimi).set({
-        "picha": picha,
-        "jina": obj.currentUser?.displayName,
+        usercpicha: picha,
+        usercname: obj.currentUser?.displayName,
+        usercloc: mahaliCon.text
       });
     } catch (shida) {
       print('shida ni hii: $shida');

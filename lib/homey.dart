@@ -39,9 +39,16 @@ class _HomeMainState extends State<HomeMain> {
         centerTitle: true,
         title: const Text('Groupie'),
         leadingWidth: 100,
-        leading: IconButton.filled(
-            onPressed: groupOptions, icon: const Icon(Icons.add)),
+        leading: CupertinoButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => const GroupDef(),
+              ));
+            },
+            child: const Text("Chat")),
         actions: [
+          IconButton.filled(
+              onPressed: groupOptions, icon: const Icon(Icons.add)),
           IconButton.filled(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
@@ -79,8 +86,10 @@ class _HomeMainState extends State<HomeMain> {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => Group(
                                   groupId: data[index].id,
+                                  groupAdmin: data[index][adminC],
                                   groupName: data[index][nameC],
-                                  groupMembers: data[index][adminC],
+                                  groupJoinR: data[index][requestC],
+                                  groupMembers: data[index][membersC],
                                 )));
                       },
                       title: Text(data[index][nameC]))),

@@ -4,6 +4,12 @@ String pichaDefault =
 String groupDefault = "Women Voice";
 String groupDefaultId = 'womenvoice';
 
+//users collection
+String userc = "users";
+String usercname = "jina";
+String usercpicha = "picha";
+String usercloc = "mahali";
+
 // collection ya groups
 String groupC = 'groups';
 //field zake

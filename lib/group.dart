@@ -4,18 +4,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:groupie/join.dart';
 import 'package:groupie/softres/constants.dart';
 import 'package:image_picker/image_picker.dart';
 import 'members.dart';
 
 class Group extends StatefulWidget {
   final String groupId;
+  final List groupAdmin;
   final String groupName;
+  final List groupJoinR;
   final List groupMembers;
   const Group(
       {super.key,
       required this.groupId,
+      required this.groupAdmin,
       required this.groupName,
+      required this.groupJoinR,
       required this.groupMembers});
 
   @override
@@ -27,22 +32,25 @@ class _GroupState extends State<Group> {
   TextEditingController popCon = TextEditingController();
   var emailYangu = FirebaseAuth.instance.currentUser?.email;
   var jinaLangu = FirebaseAuth.instance.currentUser?.displayName;
+  bool loaded = false;
+  var groupdata;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: .5,
-        centerTitle: true,
         title: Text(widget.groupName),
         actions: [
-          IconButton.filled(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => SearchToAdd(
-                          groupId: widget.groupId,
-                        )));
-              },
-              icon: const Icon(Icons.search)),
+          widget.groupAdmin.contains(emailYangu)
+              ? IconButton.filled(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => SearchToAdd(
+                              groupId: widget.groupId,
+                            )));
+                  },
+                  icon: const Icon(Icons.search))
+              : const SizedBox(),
           IconButton.filled(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
@@ -51,6 +59,16 @@ class _GroupState extends State<Group> {
                 ));
               },
               icon: const Icon(Icons.person)),
+          widget.groupAdmin.contains(emailYangu)
+              ? IconButton.filled(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) =>
+                          JoinRequests(groupId: widget.groupId),
+                    ));
+                  },
+                  icon: const Icon(Icons.notifications))
+              : const SizedBox(),
         ],
       ),
       body: Column(
@@ -65,8 +83,8 @@ class _GroupState extends State<Group> {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  var data = (snapshot.data as dynamic).docs;
-                  if (data.isEmpty) {
+                  groupdata = (snapshot.data as dynamic).docs;
+                  if (groupdata.isEmpty) {
                     return const Center(
                       child: Text('Start a conversation'),
                     );
@@ -74,11 +92,11 @@ class _GroupState extends State<Group> {
                   return ListView.builder(
                       padding: const EdgeInsets.all(8),
                       reverse: true,
-                      itemCount: data.length,
+                      itemCount: groupdata.length,
                       itemBuilder: (context, index) {
                         return Row(
                           mainAxisAlignment:
-                              data[index][shatsSender] == emailYangu
+                              groupdata[index][shatsSender] == emailYangu
                                   ? MainAxisAlignment.end
                                   : MainAxisAlignment.start,
                           children: [
@@ -95,7 +113,7 @@ class _GroupState extends State<Group> {
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    data[index][shatsImage] != null
+                                    groupdata[index][shatsImage] != null
                                         ? GestureDetector(
                                             onTap: () {
                                               showCupertinoDialog(
@@ -103,7 +121,7 @@ class _GroupState extends State<Group> {
                                                 builder: (context) =>
                                                     CupertinoAlertDialog(
                                                   title: Text(
-                                                      "${data[index][shatsText]} sold at ${data[index][shatsImagePrice]} TZS"),
+                                                      "${groupdata[index][shatsText]} sold at ${groupdata[index][shatsImagePrice]} TZS"),
                                                   content: CupertinoTextField(
                                                     controller: popCon,
                                                     keyboardType:
@@ -128,8 +146,9 @@ class _GroupState extends State<Group> {
                                                         var keyPrice =
                                                             int.parse(
                                                                 popCon.text);
-                                                        var actualPrice = int
-                                                            .parse(data[index][
+                                                        var actualPrice =
+                                                            int.parse(groupdata[
+                                                                    index][
                                                                 shatsImagePrice]);
                                                         if (keyPrice <
                                                             actualPrice) {
@@ -152,7 +171,7 @@ class _GroupState extends State<Group> {
                                               padding: const EdgeInsets.only(
                                                   bottom: 6),
                                               child: Image.network(
-                                                  data[index][shatsImage]),
+                                                  groupdata[index][shatsImage]),
                                             ),
                                           )
                                         : const SizedBox(),
@@ -164,21 +183,25 @@ class _GroupState extends State<Group> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            data[index][shatsText],
+                                            groupdata[index][shatsText],
                                             style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16),
                                           ),
-                                          data[index][shatImageDesc] != null
+                                          groupdata[index][shatImageDesc] !=
+                                                  null
                                               ? Text(
-                                                  data[index][shatImageDesc],
+                                                  groupdata[index]
+                                                      [shatImageDesc],
                                                   style: const TextStyle(
                                                       fontSize: 16),
                                                 )
                                               : const SizedBox(),
-                                          data[index][shatsSenderName] != null
+                                          groupdata[index][shatsSenderName] !=
+                                                  null
                                               ? Text(
-                                                  data[index][shatsSenderName],
+                                                  groupdata[index]
+                                                      [shatsSenderName],
                                                 )
                                               : const SizedBox(),
                                         ],
@@ -196,7 +219,7 @@ class _GroupState extends State<Group> {
               },
             ),
           ),
-          widget.groupMembers.contains(emailYangu)
+          widget.groupAdmin.contains(emailYangu)
               ? Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CupertinoTextField(
